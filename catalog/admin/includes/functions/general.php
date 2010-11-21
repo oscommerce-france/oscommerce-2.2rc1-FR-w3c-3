@@ -53,9 +53,9 @@
   }
 
   function tep_sanitize_string($string) {
-    $string = ereg_replace(' +', ' ', $string);
-
-    return preg_replace("/[<>]/", '_', $string);
+    $patterns = array ('/ +/','/[<>]/');
+    $replace = array (' ', '_');
+    return preg_replace($patterns, $replace, trim($string));
   }
 
   function tep_customers_name($customers_id) {
@@ -147,7 +147,7 @@
     if (@date('Y', mktime($hour, $minute, $second, $month, $day, $year)) == $year) {
       return date(DATE_FORMAT, mktime($hour, $minute, $second, $month, $day, $year));
     } else {
-      return ereg_replace('2037' . '$', $year, date(DATE_FORMAT, mktime($hour, $minute, $second, $month, $day, 2037)));
+      return preg_replace('/2037$/', $year, date(DATE_FORMAT, mktime($hour, $minute, $second, $month, $day, 2037)));
     }
 
   }
@@ -951,7 +951,7 @@
           $cached_file = $cache_blocks[$i]['file'];
           $languages = tep_get_languages();
           for ($i=0, $n=sizeof($languages); $i<$n; $i++) {
-            $cached_file = ereg_replace('-language', '-' . $languages[$i]['directory'], $cached_file);
+            $cached_file = preg_replace('/-language/', '-' . $languages[$i]['directory'], $cached_file);
             @unlink(DIR_FS_CACHE . $cached_file);
           }
         }
@@ -1277,7 +1277,7 @@
 // nl2br() prior PHP 4.2.0 did not convert linefeeds on all OSs (it only converted \n)
   function tep_convert_linefeeds($from, $to, $string) {
     if ((PHP_VERSION < "4.0.5") && is_array($from)) {
-      return ereg_replace('(' . implode('|', $from) . ')', $to, $string);
+      return preg_replace('/(' . implode('|', $from) . ')/', $to, $string);
     } else {
       return str_replace($from, $to, $string);
     }

@@ -1,11 +1,11 @@
 <?php
 /*
-  $Id: backup.php,v 1.60 2003/06/29 22:50:51 hpdl Exp $
+  $Id$
 
   osCommerce, Open Source E-Commerce Solutions
   http://www.oscommerce.com
 
-  Copyright (c) 2003 osCommerce
+  Copyright (c) 2008 osCommerce
 
   Released under the GNU General Public License
 */
@@ -63,7 +63,7 @@
             $schema .= ',' . "\n";
           }
 
-          $schema = ereg_replace(",\n$", '', $schema);
+          $schema = preg_replace("/,\n$/", '', $schema);
 
 // add the keys
           $index = array();
@@ -111,7 +111,7 @@
                   $schema .= 'NULL, ';
                 } elseif (tep_not_null($rows[$i])) {
                   $row = addslashes($rows[$i]);
-                  $row = ereg_replace("\n#", "\n".'\#', $row);
+                  $row = preg_replace("/\n#/", "\n".'\#', $row);
 
                   $schema .= '\'' . $row . '\', ';
                 } else {
@@ -119,7 +119,7 @@
                 }
               }
 
-              $schema = ereg_replace(', $', '', $schema) . ');' . "\n";
+              $schema = preg_replace('/, $/', '', $schema) . ');' . "\n";
               fputs($fp, $schema);
             }
           }
@@ -206,6 +206,7 @@
 
         if (isset($restore_query)) {
           $sql_array = array();
+          $drop_table_names = array();
           $sql_length = strlen($restore_query);
           $pos = strpos($restore_query, ';');
           for ($i=$pos; $i<$sql_length; $i++) {
@@ -238,17 +239,26 @@
               if ($next == '') { // get the last insert query
                 $next = 'insert';
               }
-              if ( (eregi('create', $next)) || (eregi('insert', $next)) || (eregi('drop t', $next)) ) {
+              if ( (preg_match('/create/i', $next)) || (preg_match('/insert/i', $next)) || (preg_match('/drop t/i', $next)) ) {
+                $query = substr($restore_query, 0, $i);
+
                 $next = '';
-                $sql_array[] = substr($restore_query, 0, $i);
+                $sql_array[] = $query;
                 $restore_query = ltrim(substr($restore_query, $i+1));
                 $sql_length = strlen($restore_query);
                 $i = strpos($restore_query, ';')-1;
+
+                if (preg_match('/^create*/i', $query)) {
+                  $table_name = trim(substr($query, stripos($query, 'table ')+6));
+                  $table_name = substr($table_name, 0, strpos($table_name, ' '));
+
+                  $drop_table_names[] = $table_name;
+                }
               }
             }
           }
 
-          tep_db_query("drop table if exists address_book, address_format, administrators, banners, banners_history, categories, categories_description, configuration, configuration_group, counter, counter_history, countries, currencies, customers, customers_basket, customers_basket_attributes, customers_info, languages, manufacturers, manufacturers_info, orders, orders_products, orders_status, orders_status_history, orders_products_attributes, orders_products_download, products, products_attributes, products_attributes_download, prodcts_description, products_options, products_options_values, products_options_values_to_products_options, products_to_categories, reviews, reviews_description, sessions, specials, tax_class, tax_rates, geo_zones, whos_online, zones, zones_to_geo_zones");
+          tep_db_query('drop table if exists ' . implode(', ', $drop_table_names));
 
           for ($i=0, $n=sizeof($sql_array); $i<$n; $i++) {
             tep_db_query($sql_array[$i]);
@@ -260,7 +270,7 @@
           tep_db_query("delete from " . TABLE_SESSIONS);
 
           tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key = 'DB_LAST_RESTORE'");
-          tep_db_query("insert into " . TABLE_CONFIGURATION . " values ('', 'Last Database Restore', 'DB_LAST_RESTORE', '" . $read_from . "', 'Last database restore file', '6', '', '', now(), '', '')");
+          tep_db_query("insert into " . TABLE_CONFIGURATION . " values (null, 'Last Database Restore', 'DB_LAST_RESTORE', '" . $read_from . "', 'Last database restore file', '6', '0', null, now(), '', '')");
 
           if (isset($remove_raw) && ($remove_raw == true)) {
             unlink($restore_from);
@@ -316,31 +326,31 @@
     $messageStack->add(ERROR_BACKUP_DIRECTORY_DOES_NOT_EXIST, 'error');
   }
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html <?php echo HTML_PARAMS; ?>>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=<?php echo CHARSET; ?>">
 <title><?php echo TITLE; ?></title>
 <link rel="stylesheet" type="text/css" href="includes/stylesheet.css">
-<script type="text/javascript" src="includes/general.js"></script>
+<script language="javascript" src="includes/general.js"></script>
 </head>
-<body>
+<body marginwidth="0" marginheight="0" topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" bgcolor="#FFFFFF">
 <!-- header //-->
 <?php require(DIR_WS_INCLUDES . 'header.php'); ?>
 <!-- header_eof //-->
 
 <!-- body //-->
-<table border="0" summary="" width="100%" cellspacing="2" cellpadding="2">
+<table border="0" width="100%" cellspacing="2" cellpadding="2">
   <tr>
-    <td width="<?php echo BOX_WIDTH; ?>" valign="top"><table border="0" summary="" width="<?php echo BOX_WIDTH; ?>" cellspacing="1" cellpadding="1" class="columnLeft">
+    <td width="<?php echo BOX_WIDTH; ?>" valign="top"><table border="0" width="<?php echo BOX_WIDTH; ?>" cellspacing="1" cellpadding="1" class="columnLeft">
 <!-- left_navigation //-->
 <?php require(DIR_WS_INCLUDES . 'column_left.php'); ?>
 <!-- left_navigation_eof //-->
     </table></td>
 <!-- body_text //-->
-    <td width="100%" valign="top"><table border="0" summary="" width="100%" cellspacing="0" cellpadding="2">
+    <td width="100%" valign="top"><table border="0" width="100%" cellspacing="0" cellpadding="2">
       <tr>
-        <td><table border="0" summary="" width="100%" cellspacing="0" cellpadding="0">
+        <td><table border="0" width="100%" cellspacing="0" cellpadding="0">
           <tr>
             <td class="pageHeading"><?php echo HEADING_TITLE; ?></td>
             <td class="pageHeading" align="right"><?php echo tep_draw_separator('pixel_trans.gif', HEADING_IMAGE_WIDTH, HEADING_IMAGE_HEIGHT); ?></td>
@@ -348,9 +358,9 @@
         </table></td>
       </tr>
       <tr>
-        <td><table border="0" summary="" width="100%" cellspacing="0" cellpadding="0">
+        <td><table border="0" width="100%" cellspacing="0" cellpadding="0">
           <tr>
-            <td valign="top"><table border="0" summary="" width="100%" cellspacing="0" cellpadding="2">
+            <td valign="top"><table border="0" width="100%" cellspacing="0" cellpadding="2">
               <tr class="dataTableHeadingRow">
                 <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_TITLE; ?></td>
                 <td class="dataTableHeadingContent" align="center"><?php echo TABLE_HEADING_FILE_DATE; ?></td>
@@ -362,7 +372,7 @@
     $dir = dir(DIR_FS_BACKUP);
     $contents = array();
     while ($file = $dir->read()) {
-      if (!is_dir(DIR_FS_BACKUP . $file)) {
+      if (!is_dir(DIR_FS_BACKUP . $file) && in_array(substr($file, -3), array('zip', 'sql', '.gz'))) {
         $contents[] = $file;
       }
     }
