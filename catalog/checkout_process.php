@@ -8,6 +8,9 @@
   Copyright (c) 2007 osCommerce
 
   Released under the GNU General Public License
+  
+  
+  en attente avant une mise à jour partielle ou totale
 */
 
   include('includes/application_top.php');
