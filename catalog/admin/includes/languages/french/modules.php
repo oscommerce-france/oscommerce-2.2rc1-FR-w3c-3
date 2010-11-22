@@ -18,5 +18,9 @@ define('TABLE_HEADING_MODULES', 'Modules');
 define('TABLE_HEADING_SORT_ORDER', 'Type commande');
 define('TABLE_HEADING_ACTION', 'Action');
 
+define('TEXT_INFO_VERSION', 'Version:');
+define('TEXT_INFO_ONLINE_STATUS', 'Etat d\'activation');
+define('TEXT_INFO_API_VERSION', 'Version de l\'API:');
+
 define('TEXT_MODULE_DIRECTORY', 'Répertoire contenant les modules :');
 ?>
